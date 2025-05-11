@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "4567:4567"  # для Sinatra
+    volumes:
+      - ./db:/app/db  # монтируем папку с данными
+    environment:
+      - RACK_ENV=production
