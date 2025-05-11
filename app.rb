@@ -11,8 +11,14 @@ Dir[File.join(__dir__, 'lib', '*.rb')].each { |file| require file }
 
 use Rack::JSONBodyParser
 
+before '/operation' do
+  @user = User.where(id: params['user_id'].to_i).first
+  halt 400, 'Клиент не найден!' unless @user
+end
+
 post '/operation' do
-  calc_op = CalculateOperation.new(params['user_id'], params['positions'])
+  p @user[:id]
+  calc_op = CalculateOperation.new(@user, params['positions'])
 
   # Создаём новую операцию
   @op = Operation.create(
@@ -48,12 +54,19 @@ post '/operation' do
   }.to_json
 end
 
-post '/submit' do
+before '/submit' do
   @user = User.where(id: params['user']['id']).first
-  @operation = Operation.where(id: params['operation_id'], user_id: params['user']['id']).first
+  halt 400, 'Клиент не найден!' unless @user
 
+  @operation = Operation.where(id: params['operation_id'], user_id: @user[:id]).first
+  halt 400, 'Операция не найдена!' if @operation.nil?
+  halt 400, 'Операция уже проведена!' if @operation[:done]
+  halt 400, 'Недостаточно баллов для списания!' if params['write_off'].to_f > @user[:bonus].to_f
+end
+
+post '/submit' do
+  # проверяем возможность подтверждения
   @operation.update(write_off: params['write_off'], done: true)
-
   content_type :json
   status 200
   {

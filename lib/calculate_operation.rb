@@ -2,8 +2,8 @@ class CalculateOperation
 
   attr_reader :user, :positions, :summ, :discount, :cashback
 
-  def initialize(user_id, positions)
-    @user = User.where(id: user_id).first
+  def initialize(user, positions)
+    @user = user
     @positions = positions.map { |product| parse_position(product) }
     @summ, @discount, @cashback = summ_discount_and_cash(@positions)
   end
